@@ -192,8 +192,8 @@ View it in Atlas under **Browse Collections**, or with MongoDB Compass using the
 - [x] Profile, Skill Gap, Roadmap, Resume Builder (PDF / Word), chatbot with resume interview
 - [x] MongoDB Atlas with pooling and retry
 - [x] Backend endpoints for real jobs and application tracking
-- [ ] Recommendations page: real job cards with Apply buttons
-- [ ] Home graph driven by real applications
+- [x] Recommendations page: real job cards with Apply buttons
+- [x] Home graph driven by real applications
 - [ ] Production deployment
 - [ ] Automated tests
 
