@@ -113,7 +113,7 @@ elif flash == "fail":
     st.toast("Saved on this page only. The backend isn't reachable.", icon="⚠️")
 
 profile = st.session_state["profile"]
-
+profile["user_id"] = uid 
 # ---------- Page body ----------
 if page == "🏠 Home":
     home.render(profile)

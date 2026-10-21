@@ -155,3 +155,33 @@ def apply(req: ApplyRequest):
 def applications(user_id: str):
     doc = database.get_doc("applications", user_id) or {"items": []}
     return _summary(doc.get("items", []))
+# ---------- Skill progress (completed skills ticked on the Skill Gap page) ----------
+class SkillDone(BaseModel):
+    user_id: str
+    skill: str
+    done: bool = True
+
+
+def _skill_summary(items: List[Dict[str, Any]]) -> Dict[str, Any]:
+    by_month = Counter(i["completed_at"][:7] for i in items)
+    return {"items": items, "total": len(items),
+            "completed": [i["skill"] for i in items], "by_month": dict(by_month)}
+
+
+@router.post("/skill-progress")
+def set_skill_progress(req: SkillDone):
+    doc = database.get_doc("skill_progress", req.user_id) or {"items": []}
+    items = doc.get("items", [])
+    existing = next((i for i in items if i["skill"].lower() == req.skill.lower()), None)
+    if req.done and not existing:
+        items.append({"skill": req.skill, "completed_at": datetime.now(timezone.utc).isoformat()})
+    elif not req.done and existing:
+        items = [i for i in items if i is not existing]
+    database.save_doc("skill_progress", req.user_id, {"items": items})
+    return _skill_summary(items)
+
+
+@router.get("/skill-progress/{user_id}")
+def get_skill_progress(user_id: str):
+    doc = database.get_doc("skill_progress", user_id) or {"items": []}
+    return _skill_summary(doc.get("items", []))

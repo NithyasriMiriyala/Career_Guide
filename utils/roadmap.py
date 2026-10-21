@@ -127,3 +127,58 @@ GENERIC = {
 
 def topics_for(skill: str, level: str) -> dict:
     return TOPICS.get(skill.strip().lower(), {}).get(level) or GENERIC[level]
+# ---------- YouTube learning resources ----------
+from urllib.parse import quote_plus
+
+CHANNELS = {
+    "python": {"Intermediate": ["Corey Schafer", "Tech With Tim", "freeCodeCamp.org"],
+            "Advanced": ["ArjanCodes", "mCoding", "Corey Schafer"]},
+    "sql": {"Intermediate": ["Alex The Analyst", "freeCodeCamp.org", "Kudvenkat"],
+            "Advanced": ["Alex The Analyst", "Luke Barousse", "freeCodeCamp.org"]},
+    "java": {"Intermediate": ["Telusko", "Programming with Mosh", "Amigoscode"],
+            "Advanced": ["Java Brains", "Amigoscode", "Telusko"]},
+    "javascript": {"Intermediate": ["Traversy Media", "Web Dev Simplified", "freeCodeCamp.org"],
+                "Advanced": ["Namaste JavaScript", "Fireship", "Web Dev Simplified"]},
+    "html": {"Intermediate": ["Kevin Powell", "Traversy Media", "freeCodeCamp.org"],
+            "Advanced": ["Kevin Powell", "Web Dev Simplified", "Traversy Media"]},
+    "css": {"Intermediate": ["Kevin Powell", "Traversy Media", "freeCodeCamp.org"],
+            "Advanced": ["Kevin Powell", "Web Dev Simplified", "Fireship"]},
+    "react": {"Intermediate": ["The Net Ninja", "Traversy Media", "freeCodeCamp.org"],
+            "Advanced": ["Jack Herrington", "Codevolution", "Fireship"]},
+    "node.js": {"Intermediate": ["Traversy Media", "The Net Ninja", "freeCodeCamp.org"],
+                "Advanced": ["Academind", "Fireship", "Traversy Media"]},
+    "machine learning": {"Intermediate": ["StatQuest with Josh Starmer", "Krish Naik", "Codebasics"],
+                        "Advanced": ["Krish Naik", "StatQuest with Josh Starmer", "Sentdex"]},
+    "deep learning": {"Intermediate": ["DeepLearning.AI", "3Blue1Brown", "Krish Naik"],
+                    "Advanced": ["Andrej Karpathy", "DeepLearning.AI", "Yannic Kilcher"]},
+    "llms": {"Intermediate": ["DeepLearning.AI", "Krish Naik", "freeCodeCamp.org"],
+            "Advanced": ["Andrej Karpathy", "DeepLearning.AI", "Umar Jamil"]},
+    "apis": {"Intermediate": ["freeCodeCamp.org", "Traversy Media", "Amigoscode"],
+            "Advanced": ["ByteByteGo", "Hussein Nasser", "Amigoscode"]},
+    "docker": {"Intermediate": ["TechWorld with Nana", "freeCodeCamp.org", "Bret Fisher"],
+            "Advanced": ["Bret Fisher", "KodeKloud", "TechWorld with Nana"]},
+    "git": {"Intermediate": ["freeCodeCamp.org", "Fireship", "Kunal Kushwaha"],
+            "Advanced": ["Fireship", "Kunal Kushwaha", "freeCodeCamp.org"]},
+    "cloud": {"Intermediate": ["freeCodeCamp.org", "KodeKloud", "TechWorld with Nana"],
+            "Advanced": ["TechWorld with Nana", "KodeKloud", "freeCodeCamp.org"]},
+    "excel": {"Intermediate": ["Kevin Stratvert", "Leila Gharani", "ExcelIsFun"],
+            "Advanced": ["Leila Gharani", "MyOnlineTrainingHub", "ExcelIsFun"]},
+    "power bi": {"Intermediate": ["Guy in a Cube", "Kevin Stratvert", "Alex The Analyst"],
+                "Advanced": ["Guy in a Cube", "SQLBI", "RADACAD"]},
+    "statistics": {"Intermediate": ["StatQuest with Josh Starmer", "Khan Academy", "Brandon Foltz"],
+                "Advanced": ["StatQuest with Josh Starmer", "zedstatistics", "Khan Academy"]},
+    "data visualization": {"Intermediate": ["Alex The Analyst", "Storytelling with Data", "Guy in a Cube"],
+                        "Advanced": ["Storytelling with Data", "Guy in a Cube", "Alex The Analyst"]},
+    "communication": {"Intermediate": ["Vinh Giang", "TED", "Charisma on Command"],
+                    "Advanced": ["Charisma on Command", "Vinh Giang", "TED"]},
+}
+DEFAULT_CHANNELS = ["freeCodeCamp.org", "Programming with Mosh"]
+
+
+def yt_search(query: str) -> str:
+    """A YouTube search link: it never goes dead."""
+    return "https://www.youtube.com/results?search_query=" + quote_plus(query)
+
+
+def channels_for(skill: str, level: str) -> list:
+    return CHANNELS.get(skill.strip().lower(), {}).get(level) or DEFAULT_CHANNELS

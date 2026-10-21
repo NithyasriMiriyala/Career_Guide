@@ -2,7 +2,7 @@ import html
 
 import streamlit as st
 
-from utils.roadmap import topics_for
+from utils.roadmap import channels_for, topics_for, yt_search
 from utils.theme import THEME, metric_card
 
 LEVELS = ["Beginner", "Intermediate", "Advanced"]
@@ -18,6 +18,11 @@ CSS = f"""
         display:flex; align-items:center; justify-content:center; font-size:18px;}}
 .cg-stage {{font-weight:700; font-size:1.15rem; color:{THEME["primary"]};}}
 .cg-sub {{color:{THEME["muted"]}; font-size:.9rem; margin-top:2px;}}
+.cg-res {{background:#EAF3FC; border:1px dashed #9CC0E6; border-radius:12px;
+        padding:10px 14px; margin:10px 0; color:{THEME["text"]}; font-size:.92rem;}}
+.cg-res a {{margin-right:14px;}}
+.cg-link {{color:{THEME["accent"]}; font-weight:600; text-decoration:none;}}
+.cg-link:hover {{text-decoration:underline;}}
 .cg-topic {{background:{THEME["card"]}; border:1px solid #CFE0F2; border-radius:12px;
         padding:12px 16px; margin:10px 0; box-shadow:0 1px 3px rgba(42,92,143,.08);}}
 .cg-topic h5 {{margin:0 0 6px 0; font-size:1rem; color:{THEME["text"]};}}
@@ -26,6 +31,7 @@ CSS = f"""
         margin-right:8px;}}
 .cg-topic ul {{margin:0; padding-left:22px; color:{THEME["text"]};}}
 .cg-topic li {{margin:2px 0;}}
+.cg-watch {{display:inline-block; margin-top:8px;}}
 .cg-start .cg-dot {{border-color:#2E9E6B;}}
 .cg-end .cg-dot {{border-color:#E0A526;}}
 </style>
@@ -33,11 +39,15 @@ CSS = f"""
 
 
 def _e(x) -> str:
-    return html.escape(str(x))
+    return html.escape(str(x), quote=True)
+
+
+def _link(url: str, text: str, cls: str = "cg-link") -> str:
+    return f'<a class="{cls}" href="{_e(url)}" target="_blank" rel="noopener noreferrer">{_e(text)}</a>'
 
 
 def _timeline(skill: str, cur: str, tgt: str) -> str:
-    """Build one top-to-bottom roadmap: you are here -> stages -> goal."""
+    """One top-to-bottom roadmap: you are here -> stages (topics + videos) -> goal."""
     out = ['<div class="cg-tl">']
     out.append(f'<div class="cg-node cg-start"><span class="cg-dot">📍</span>'
             f'<div class="cg-stage">You are here · {_e(cur)}</div></div>')
@@ -51,15 +61,27 @@ def _timeline(skill: str, cur: str, tgt: str) -> str:
                 f'{LEVELS.index(lv)}</span>'
                 f'<div class="cg-stage">{_e(prev)} → {_e(lv)}</div>'
                 f'<div class="cg-sub">{len(topics)} topics to cover</div></div>')
+
+        # YouTube channels for this stage
+        links = "".join(
+            _link(yt_search(f"{ch} {skill} {prev} to {lv} tutorial"), f"▶ {ch}")
+            for ch in channels_for(skill, lv)
+        )
+        full = _link(yt_search(f"{skill} {prev} to {lv} full course"), "🔎 Search full courses")
+        out.append(f'<div class="cg-res"><b>📺 Learn {_e(prev)} → {_e(lv)} from:</b><br>'
+                   f'{links}{full}</div>')
+
         for topic, subs in topics.items():
             step += 1
             items = "".join(f"<li>{_e(s)}</li>" for s in subs)
+            watch = _link(yt_search(f"{skill} {topic} tutorial"), "▶ Watch tutorials on this topic",
+                          "cg-link cg-watch")
             out.append(f'<div class="cg-topic"><h5><span class="cg-num" '
-                    f'style="background:{color}">{step}</span>{_e(topic)}</h5>'
-                    f'<ul>{items}</ul></div>')
+                       f'style="background:{color}">{step}</span>{_e(topic)}</h5>'
+                       f'<ul>{items}</ul>{watch}</div>')
 
     out.append(f'<div class="cg-node cg-end"><span class="cg-dot">🎯</span>'
-            f'<div class="cg-stage">Goal reached · {_e(tgt)}</div></div>')
+               f'<div class="cg-stage">Goal reached · {_e(tgt)}</div></div>')
     out.append("</div>")
     return "".join(out)  # one line: no blank lines, so markdown never breaks the HTML
 
@@ -94,8 +116,8 @@ def render(profile: dict) -> None:
                     for lv in LEVELS[LEVELS.index(c) + 1: LEVELS.index(t) + 1])
         metric_card("Topics to learn", str(total))
 
-    st.caption("Follow each path from top to bottom. Targets come from the "
-        "**🧩 Skill Gap** page, and only the levels you still need are shown.")
+    st.caption("Follow each path from top to bottom. Each stage lists YouTube channels to learn from, "
+               "and every topic has a link to tutorials. Targets come from the **🧩 Skill Gap** page.")
 
     pick = st.selectbox("Show roadmap for", ["All skills"] + [p[0] for p in plan])
     st.markdown(CSS, unsafe_allow_html=True)
