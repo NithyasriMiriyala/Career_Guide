@@ -173,7 +173,124 @@ CHANNELS = {
                     "Advanced": ["Charisma on Command", "Vinh Giang", "TED"]},
 }
 DEFAULT_CHANNELS = ["freeCodeCamp.org", "Programming with Mosh"]
+# ---------- Certifications and project ideas ----------
+CERTS = {
+    "python": {"Intermediate": ["Python Institute PCAP: Certified Associate in Python Programming",
+                                "Google IT Automation with Python (Coursera)"],
+            "Advanced": ["Python Institute PCPP1: Certified Professional in Python Programming"]},
+    "sql": {"Intermediate": ["HackerRank SQL (Intermediate) skill certificate",
+                            "Microsoft Azure Data Fundamentals (DP-900)"],
+            "Advanced": ["HackerRank SQL (Advanced) skill certificate",
+                        "Oracle Database SQL Certified Associate"]},
+    "java": {"Intermediate": ["Oracle Certified Foundations Associate, Java"],
+            "Advanced": ["Oracle Certified Professional: Java SE Developer"]},
+    "javascript": {"Intermediate": ["freeCodeCamp JavaScript Algorithms and Data Structures"],
+                "Advanced": ["freeCodeCamp Front End Development Libraries",
+                                "OpenJS Node.js Application Developer (JSNAD)"]},
+    "html": {"Intermediate": ["freeCodeCamp Responsive Web Design"],
+            "Advanced": ["Meta Front-End Developer Professional Certificate (Coursera)"]},
+    "css": {"Intermediate": ["freeCodeCamp Responsive Web Design"],
+            "Advanced": ["Meta Front-End Developer Professional Certificate (Coursera)"]},
+    "react": {"Intermediate": ["Meta Front-End Developer Professional Certificate (Coursera)"],
+            "Advanced": ["freeCodeCamp Front End Development Libraries"]},
+    "node.js": {"Intermediate": ["Meta Back-End Developer Professional Certificate (Coursera)"],
+                "Advanced": ["OpenJS Node.js Application Developer (JSNAD)",
+                            "OpenJS Node.js Services Developer (JSNSD)"]},
+    "machine learning": {"Intermediate": ["Machine Learning Specialization (DeepLearning.AI and Stanford, Coursera)"],
+                        "Advanced": ["AWS Certified Machine Learning Engineer - Associate",
+                                    "Google Cloud Professional Machine Learning Engineer"]},
+    "deep learning": {"Intermediate": ["Deep Learning Specialization (DeepLearning.AI, Coursera)"],
+                    "Advanced": ["NVIDIA Deep Learning Institute certificate courses"]},
+    "llms": {"Intermediate": ["Generative AI with Large Language Models (DeepLearning.AI and AWS, Coursera)"],
+            "Advanced": ["Hugging Face LLM Course (free, with exercises)",
+                        "NVIDIA Deep Learning Institute: generative AI courses"]},
+    "apis": {"Intermediate": ["Postman API Fundamentals Student Expert"],
+            "Advanced": ["Meta Back-End Developer Professional Certificate (Coursera)"]},
+    "docker": {"Intermediate": ["KodeKloud Docker course completion certificate"],
+            "Advanced": ["Certified Kubernetes Application Developer (CKAD)",
+                            "Docker Certified Associate (DCA), if still offered"]},
+    "git": {"Intermediate": ["GitHub Foundations (GH-900)"],
+            "Advanced": ["GitHub Actions (GH-200)"]},
+    "cloud": {"Intermediate": ["AWS Certified Cloud Practitioner", "Microsoft Azure Fundamentals (AZ-900)",
+                            "Google Cloud Digital Leader"],
+            "Advanced": ["AWS Certified Solutions Architect - Associate",
+                        "Microsoft Azure Administrator (AZ-104)"]},
+    "excel": {"Intermediate": ["Microsoft Office Specialist: Excel Associate"],
+            "Advanced": ["Microsoft Office Specialist: Excel Expert"]},
+    "power bi": {"Intermediate": ["Microsoft Power BI Data Analyst Associate (PL-300)"],
+                "Advanced": ["Microsoft Fabric Analytics Engineer Associate (DP-600)"]},
+    "statistics": {"Intermediate": ["Statistics with Python Specialization (University of Michigan, Coursera)"],
+                "Advanced": ["Google Advanced Data Analytics Certificate (Coursera)"]},
+    "data visualization": {"Intermediate": ["Tableau Desktop Specialist",
+                                            "Google Data Analytics Certificate (Coursera)"],
+                        "Advanced": ["Tableau Certified Data Analyst"]},
+    "communication": {"Intermediate": ["Toastmasters Pathways (club-based)"],
+                    "Advanced": ["Toastmasters Pathways advanced levels"]},
+}
 
+PROJECTS = {
+    "python": {"Intermediate": ["Expense tracker that saves to CSV or JSON", "Web scraper that collects job postings into a spreadsheet"],
+            "Advanced": ["REST API with FastAPI, tests and logging", "A command-line tool published as a package"]},
+    "sql": {"Intermediate": ["Design a library or school database and write 20 queries on it", "Analyse a public sales dataset with joins and GROUP BY"],
+            "Advanced": ["Cohort and retention analysis with window functions", "Optimise slow queries with indexes and explain plans"]},
+    "java": {"Intermediate": ["Bank account system using OOP and collections", "Library management app with file storage"],
+            "Advanced": ["REST API with Spring Boot and a database", "Multi-threaded download manager"]},
+    "javascript": {"Intermediate": ["To-do app with local storage", "Weather app using a public API with fetch"],
+                "Advanced": ["Real-time chat app", "A small framework-free single page app with routing"]},
+    "html": {"Intermediate": ["Personal portfolio page", "Landing page copied from a design"],
+            "Advanced": ["Accessible multi-page site that scores 90+ on Lighthouse"]},
+    "css": {"Intermediate": ["Responsive layout with Flexbox and Grid", "Recreate a popular site's homepage"],
+            "Advanced": ["Design system with CSS variables and dark mode", "Animated components without a library"]},
+    "react": {"Intermediate": ["Movie search app with an API", "Notes app with state and hooks"],
+            "Advanced": ["Full dashboard with routing, state management and tests", "E-commerce front end with a cart"]},
+    "node.js": {"Intermediate": ["Blog API with Express and a database", "URL shortener"],
+                "Advanced": ["Authenticated API with JWT, validation and tests", "Real-time app with WebSockets"]},
+    "machine learning": {"Intermediate": ["House price prediction with regression", "Spam classifier with scikit-learn"],
+                        "Advanced": ["End-to-end model served as an API", "Imbalanced-data fraud detection with proper evaluation"]},
+    "deep learning": {"Intermediate": ["Digit or image classifier with a small neural network", "Sentiment analysis with an RNN or transformer"],
+                    "Advanced": ["Transfer learning on your own image dataset", "Reproduce a small research paper"]},
+    "llms": {"Intermediate": ["Chatbot that answers questions from your notes (RAG)", "Summariser for articles or PDFs"],
+            "Advanced": ["Agent that uses tools and APIs", "Evaluate and compare prompts or models on your own test set"]},
+    "apis": {"Intermediate": ["CRUD REST API with a database", "Dashboard that consumes a public API"],
+            "Advanced": ["API with authentication, rate limiting and docs", "Webhook receiver that processes events"]},
+    "docker": {"Intermediate": ["Containerise a Python or Node app", "Docker Compose with an app and a database"],
+            "Advanced": ["CI pipeline that builds and pushes an image", "Deploy a multi-container app to a cloud host"]},
+    "git": {"Intermediate": ["Use branches and pull requests on a real project", "Resolve a merge conflict on purpose and document it"],
+            "Advanced": ["GitHub Actions workflow that runs tests", "Contribute a fix to an open-source project"]},
+    "cloud": {"Intermediate": ["Host a static site on a cloud service", "Deploy a small API with a managed database"],
+            "Advanced": ["Infrastructure as code for a full app", "Serverless pipeline with storage and functions"]},
+    "excel": {"Intermediate": ["Personal budget with formulas and charts", "Sales report with pivot tables"],
+            "Advanced": ["Interactive dashboard with slicers", "Automate a report with Power Query or macros"]},
+    "power bi": {"Intermediate": ["Sales dashboard from a CSV", "Model with relationships between 3 tables"],
+            "Advanced": ["Dashboard with DAX time intelligence and row-level security", "Published report with scheduled refresh"]},
+    "statistics": {"Intermediate": ["A/B test analysis on sample data", "Descriptive analysis of a public dataset"],
+                "Advanced": ["Regression with assumptions checked", "Bayesian vs frequentist comparison on a real question"]},
+    "data visualization": {"Intermediate": ["Dashboard on a topic you care about", "Redo a bad chart and explain the improvements"],
+                        "Advanced": ["Interactive Plotly or Altair story with filters", "Map-based visualisation"]},
+    "communication": {"Intermediate": ["Record a 3-minute talk and review it", "Write a clear project README"],
+                    "Advanced": ["Give a talk or workshop to a group", "Write a case study of a project for non-technical readers"]},
+}
+
+DEFAULT_CERTS = {
+    "Intermediate": ["A recognised course certificate from Coursera, edX or the tool's own learning site"],
+    "Advanced": ["A professional-level certificate offered by the tool's vendor"],
+}
+DEFAULT_PROJECTS = {
+    "Intermediate": ["Build a small end-to-end project and publish it on GitHub"],
+    "Advanced": ["Build a larger project with tests and documentation, and deploy it"],
+}
+
+
+def google_search(query: str) -> str:
+    return "https://www.google.com/search?q=" + quote_plus(query)
+
+
+def certs_for(skill: str, level: str) -> list:
+    return CERTS.get(skill.strip().lower(), {}).get(level) or DEFAULT_CERTS.get(level, [])
+
+
+def projects_for(skill: str, level: str) -> list:
+    return PROJECTS.get(skill.strip().lower(), {}).get(level) or DEFAULT_PROJECTS.get(level, [])
 
 def yt_search(query: str) -> str:
     """A YouTube search link: it never goes dead."""

@@ -49,7 +49,7 @@ def render(profile: dict) -> None:
                 "Phone (max 10 digits)", d.get("phone_number", ""), max_chars=10, placeholder="9876543210"
             )
         location = f.text_input("City / location", d.get("location", ""), key="r_location")
-        linkedin = st.text_input("LinkedIn / GitHub link (optional)", d.get("linkedin", ""))
+        linkedin = st.text_input("LinkedIn / GitHub link", d.get("linkedin", ""))
         skills = st.text_input("Skills (comma separated)", d.get("skills_text", ", ".join(profile_skills)))
         summary = st.text_area("Summary (optional, we write one if empty)", d.get("summary", ""), height=80)
         education = st.text_area("Education", d.get("education", ""), height=100,
