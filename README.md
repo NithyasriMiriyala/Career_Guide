@@ -194,7 +194,7 @@ View it in Atlas under **Browse Collections**, or with MongoDB Compass using the
 - [x] Backend endpoints for real jobs and application tracking
 - [x] Recommendations page: real job cards with Apply buttons
 - [x] Home graph driven by real applications
-- [ ] Production deployment
-- [ ] Automated tests
+- [x] Production deployment
+- [x] Automated tests
 
 ---
