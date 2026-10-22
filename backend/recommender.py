@@ -40,7 +40,8 @@ ALIASES = {"js": "javascript", "reactjs": "react", "react.js": "react", "node": 
         "nodejs": "node.js", "ml": "machine learning", "dl": "deep learning",
         "llm": "llms", "api": "apis", "rest api": "apis", "rest apis": "apis",
         "powerbi": "power bi", "aws": "cloud", "azure": "cloud", "gcp": "cloud",
-        "stats": "statistics", "html5": "html", "css3": "css"}
+        "stats": "statistics", "html5": "html", "css3": "css", "ai": "machine learning", 
+        "artificial intelligence": "machine learning",}
 
 GOAL_BONUS, INTEREST_BONUS, INTEREST_BONUS_MAX = 12, 4, 8
 
