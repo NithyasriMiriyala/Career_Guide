@@ -14,6 +14,7 @@ from . import config, database, rag
 from .models import ChatRequest, ChatResponse, Profile, ProgressUpdate, ResumeInput
 from .reco_router import router as reco_router
 from .assistant import quick_answer
+
 logging.basicConfig(level=logging.INFO)
 LEVELS = ["Beginner", "Intermediate", "Advanced"]
 
@@ -50,7 +51,7 @@ def _all_skills(p: dict) -> list:
 
 
 # ---------------- Basics ----------------
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health():
     return {"status": "ok", "database": database.backend_name(),
             "llm_enabled": bool(config.ANTHROPIC_API_KEY)}
