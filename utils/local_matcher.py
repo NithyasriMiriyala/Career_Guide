@@ -42,6 +42,23 @@ ALIASES = {
     "postgresql": "sql", "powerbi": "power bi",
 }
 
+# Which roles each interest points towards (used for a small score boost).
+INTERESTS = {
+    "Artificial Intelligence": ["AI Engineer", "Machine Learning Engineer", "Data Scientist"],
+    "Data & Analytics": ["Data Analyst", "Data Scientist"],
+    "Web Development": ["Full-Stack Developer", "Frontend Developer", "Backend Developer"],
+    "Backend & APIs": ["Backend Developer", "AI Engineer"],
+    "Cloud & DevOps": ["Cloud / DevOps Engineer", "Backend Developer"],
+    "Automation": ["Cloud / DevOps Engineer", "AI Engineer"],
+    "Design & UI": ["Frontend Developer", "Full-Stack Developer"],
+    "Research": ["Machine Learning Engineer", "Data Scientist"],
+}
+INTEREST_OPTIONS = list(INTERESTS)
+
+GOAL_BONUS = 12
+INTEREST_BONUS = 4
+INTEREST_BONUS_MAX = 8
+
 
 def normalize(skills):
     out = []
@@ -52,20 +69,32 @@ def normalize(skills):
     return out
 
 
-def match_roles(user_skills):
-    """Skills listed earlier for a role count more. Returns roles sorted by match %."""
+def match_roles(user_skills, career_goal="", interests=None):
+    """Skills listed earlier for a role count more. A career goal and interests give a small boost.
+    Returns roles sorted by match %."""
     have = normalize(user_skills)
+    interests = interests or []
     results = []
     for role, info in ROLES.items():
         req = info["skills"]
         weights = [len(req) - i for i in range(len(req))]
         got = sum(w for s, w in zip(req, weights) if s in have)
+        score = got / sum(weights) * 100
+        reasons = []
+        if career_goal and career_goal == role:
+            score += GOAL_BONUS
+            reasons.append("🎯 Your career goal")
+        liked = [i for i in interests if role in INTERESTS.get(i, [])]
+        if liked:
+            score += min(INTEREST_BONUS * len(liked), INTEREST_BONUS_MAX)
+            reasons.append("💡 Fits your interests: " + ", ".join(liked))
         results.append({
             "role": role,
             "description": info["description"],
-            "score": round(got / sum(weights) * 100),
+            "score": min(100, round(score)),
             "matched": [s for s in req if s in have],
             "missing": [s for s in req if s not in have],
+            "reasons": reasons,
         })
     results.sort(key=lambda r: r["score"], reverse=True)
     return results

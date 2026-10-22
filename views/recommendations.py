@@ -39,11 +39,14 @@ def render(profile: dict) -> None:
     # ---- Roles that fit your skills ----
     st.markdown("#### 🎯 Roles that fit your skills")
     cols = st.columns(3)
-    for col, r in zip(cols, match_roles(skills)[:3]):
+    ranked = match_roles(skills, profile.get("career_goal", ""), profile.get("interests", []))
+    for col, r in zip(cols, ranked[:3]):
         with col:
             with st.container(border=True):
                 st.markdown(f"**{r['role']}**")
                 st.markdown(f"{r['score']}% match")
+                for why in r.get("reasons", []):
+                    st.caption(why)
                 st.markdown(chips(r["matched"], "have"), unsafe_allow_html=True)
 
     # ---- Job search ----

@@ -6,6 +6,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from utils import api
+from utils.local_matcher import INTEREST_OPTIONS, ROLES
 from utils.theme import inject_css, nav_scroll_behavior
 from views import home, recommendations, resume, roadmap, skill_gap
 
@@ -39,7 +40,7 @@ def login_screen() -> None:
     st.markdown('<div class="cg-brand">🎯 CareerGuide AI</div>', unsafe_allow_html=True)
     st.title("Welcome 👋")
     st.caption("Log in with your email to open your saved profile, applications and progress, "
-               "or to create a new profile. There is no password yet, so use your own email.")
+            "or to create a new profile. There is no password yet, so use your own email.")
     with st.form("login_form"):
         email = st.text_input("Email", placeholder="you@example.com")
         go = st.form_submit_button("Continue", type="primary")
@@ -93,6 +94,21 @@ def profile_dialog():
         "Graduated year", 1990, 2040, int(p.get("grad_year", 2026)),
         step=1, format="%d", key="p_grad",
     )
+    education = st.text_input(
+        "Education", p.get("education", ""), key="p_edu",
+        placeholder="e.g. B.Tech in Computer Science",
+    )
+    interests = st.multiselect(
+        "Interests", INTEREST_OPTIONS,
+        default=[i for i in p.get("interests", []) if i in INTEREST_OPTIONS], key="p_interests",
+    )
+    goal_options = ["(not set)"] + list(ROLES)
+    saved_goal = p.get("career_goal", "")
+    career_goal = st.selectbox(
+        "Career goal (the role you want)", goal_options,
+        index=goal_options.index(saved_goal) if saved_goal in goal_options else 0, key="p_goal",
+    )
+
     skills = st.multiselect("Skillset", SKILL_OPTIONS, default=p.get("skills", []), key="p_skills")
     extra = st.text_input(
         "Other skills (comma separated)", ", ".join(p.get("extra_skills", [])), key="p_extra"
@@ -123,6 +139,9 @@ def profile_dialog():
             "name": name.strip(),
             "dob": dob,
             "grad_year": int(grad_year),
+            "education": education.strip(),
+            "interests": interests,
+            "career_goal": "" if career_goal == "(not set)" else career_goal,
             "skills": skills,
             "extra_skills": extra_list,
             "levels": levels,
@@ -130,7 +149,7 @@ def profile_dialog():
         st.session_state["profile"] = new_profile
         ok = api.save_profile(uid, new_profile, st.session_state.get("targets", {}))
         st.session_state["flash"] = "ok" if ok else "fail"
-        st.rerun()  # closes the dialog
+        st.rerun() 
 
 
 # ---------- Top bar: brand | menu | profile | log out ----------
