@@ -1,7 +1,6 @@
 """Run:  python -m uvicorn backend.main:app --reload --port 8000"""
 from .jobs_router import router as jobs_router
 import logging
-from .assistant import quick_answer
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
@@ -14,7 +13,7 @@ from utils.roadmap import topics_for
 from . import config, database, rag
 from .models import ChatRequest, ChatResponse, Profile, ProgressUpdate, ResumeInput
 from .reco_router import router as reco_router
-
+from .assistant import quick_answer
 logging.basicConfig(level=logging.INFO)
 LEVELS = ["Beginner", "Intermediate", "Advanced"]
 
@@ -107,7 +106,7 @@ def roadmap(user_id: str):
         if ti <= ci:
             continue
         stages = [{"from": LEVELS[LEVELS.index(lv) - 1], "to": lv, "topics": topics_for(s, lv)}
-                  for lv in LEVELS[ci + 1: ti + 1]]
+                for lv in LEVELS[ci + 1: ti + 1]]
         plan.append({"skill": s, "current": cur, "target": tgt, "stages": stages})
     return {"skills_to_improve": len(plan), "plan": plan}
 
@@ -152,9 +151,15 @@ def get_progress(user_id: str):
 # ---------------- Chat (RAG) ----------------
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
-    profile = database.get_doc("profiles", req.user_id)  # optional context
+    profile = database.get_doc("profiles", req.user_id) or {}  # optional context
     history = database.get_chat(req.user_id)
-    reply, sources, used = rag.answer(req.message, profile, history, req.mode)
+
+    quick = quick_answer(req.message, profile)
+    if quick:
+        reply, sources, used = quick, ["CareerGuide assistant"], False
+    else:
+        reply, sources, used = rag.answer(req.message, profile, history, req.mode)
+
     database.append_chat(req.user_id, "user", req.message)
     database.append_chat(req.user_id, "assistant", reply)
     return ChatResponse(reply=reply, sources=sources, llm_used=used)
