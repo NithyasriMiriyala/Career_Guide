@@ -21,7 +21,24 @@ COUNTRY_CODES = [
 
 def _file_stem(name: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "_", name).strip("_") or "resume"
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+
+def _missing_fields(name, email, digits, skills, education, experience, projects) -> list:
+    miss = []
+    if not name.strip():
+        miss.append("Full name")
+    if not EMAIL_RE.match(email.strip()):
+        miss.append("a valid Email")
+    if not digits:
+        miss.append("Phone number")
+    if not [s for s in skills.split(",") if s.strip()]:
+        miss.append("Skills")
+    if not education.strip():
+        miss.append("Education")
+    if not (experience.strip() or projects.strip()):
+        miss.append("Experience or Projects (at least one)")
+    return miss
 
 def render(profile: dict) -> None:
     st.title("📄 Resume Builder")
@@ -64,40 +81,50 @@ def render(profile: dict) -> None:
         go = st.form_submit_button("Generate resume & ATS score", type="primary")
 
     if go:
-        problem = None
         code = code_label.split()[1]
         digits = number.strip()
+        missing = _missing_fields(name, email, digits, skills, education, experience, projects)
+        problem = None
         if digits:
             if not digits.isdigit():
                 problem = "Phone number must contain digits only."
-            elif code == "+91" and (len(digits) != 10 or digits[0] not in "789"):
-                problem = "Indian numbers must be exactly 10 digits and start with 7, 8 or 9."
+            elif code == "+91" and (len(digits) != 10 or digits[0] not in "6789"):
+                problem = "Indian numbers must be exactly 10 digits and start with 6, 7, 8 or 9."
             elif code != "+91" and not 6 <= len(digits) <= 10:
                 problem = "Enter 6 to 10 digits for the phone number."
-        if problem:
-            st.error(problem)
-        else:
-            st.session_state["resume"] = {
-                "name": name, "role": role, "email": email,
-                "phone": f"{code} {digits}" if digits else "",
-                "phone_code": code_label, "phone_number": digits,
-                "location": location, "linkedin": linkedin, "skills_text": skills,
-                "skills": [s.strip() for s in skills.split(",") if s.strip()],
-                "summary": summary, "education": education, "experience": experience,
-                "projects": projects, "certificates": certificates, "volunteer": volunteer,
-                "hobbies": hobbies,
-            }
-            d = st.session_state["resume"]
-            # Save to the database (Atlas) only when the user generates the resume
-            uid = profile.get("user_id")
-            if uid:
-                try:
-                    api.save_resume(uid, d)
-                    st.toast("Resume saved ✅")
-                except Exception as exc:
-                    st.warning(f"Resume generated, but it could not be saved to the database: {exc}")
 
-    if not d.get("name"):
+        if missing:
+            st.session_state["resume_valid"] = False
+            st.error("Please fill in: " + ", ".join(missing) + " before generating your resume.")
+            return
+        if problem:
+            st.session_state["resume_valid"] = False
+            st.error(problem)
+            return
+
+        st.session_state["resume"] = {
+            "name": name, "role": role, "email": email.strip(),
+            "phone": f"{code} {digits}",
+            "phone_code": code_label, "phone_number": digits,
+            "location": location, "linkedin": linkedin, "skills_text": skills,
+            "skills": [s.strip() for s in skills.split(",") if s.strip()],
+            "summary": summary, "education": education, "experience": experience,
+            "projects": projects, "certificates": certificates, "volunteer": volunteer,
+            "hobbies": hobbies,
+        }
+        st.session_state["resume_valid"] = True
+        d = st.session_state["resume"]
+        # Save to the database (Atlas) only when the resume is valid
+        uid = profile.get("user_id")
+        if uid:
+            try:
+                api.save_resume(uid, d)
+                st.toast("Resume saved ✅")
+            except Exception as exc:
+                st.warning(f"Resume generated, but it could not be saved to the database: {exc}")
+
+    if not st.session_state.get("resume_valid"):
+        st.info("Fill in the form above and click **Generate resume & ATS score** to see your score.")
         return
 
     role = d["role"]

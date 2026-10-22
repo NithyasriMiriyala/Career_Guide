@@ -1,6 +1,7 @@
-"""FastAPI entry point.  Run:  python -m uvicorn backend.main:app --reload --port 8000"""
+"""Run:  python -m uvicorn backend.main:app --reload --port 8000"""
 from .jobs_router import router as jobs_router
 import logging
+from .assistant import quick_answer
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="CareerGuide AI", version="1.0.0", lifespan=lifespan)
 app.include_router(reco_router)
+app.include_router(jobs_router)
 
 # CORS: allowed origins come from CORS_ORIGINS in .env (local + live URLs)
 app.add_middleware(
