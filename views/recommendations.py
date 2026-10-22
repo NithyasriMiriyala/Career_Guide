@@ -1,45 +1,84 @@
+from urllib.parse import quote_plus
+import os
+
+import requests
 import streamlit as st
+
 from utils import api
 from utils.local_matcher import match_roles
-from utils.theme import chips, metric_card
+from utils.theme import chips
 
 
-def _applied(uid):
-    """Return (set of applied job ids, total applications)."""
-    if not uid:
-        return set(), 0
+def _slug(text: str) -> str:
+    return "-".join("".join(c if c.isalnum() else " " for c in text.lower()).split())
+
+
+# name, icon, what it is good for, URL builder(query, location, kind)
+PORTALS = [
+    ("LinkedIn", "💼", "Jobs, internships and recruiters",
+    lambda q, l, k: f"https://www.linkedin.com/jobs/search/?keywords={quote_plus(q)}"
+                    f"&location={quote_plus(l)}" + ("&f_JT=I" if k == "Internships" else "")),
+    ("Indeed", "🔎", "Large job board, easy filters",
+    lambda q, l, k: f"https://in.indeed.com/jobs?q={quote_plus(q + (' internship' if k == 'Internships' else ''))}"
+                    f"&l={quote_plus(l)}"),
+    ("Naukri", "🇮🇳", "Popular in India for freshers and experienced",
+    lambda q, l, k: f"https://www.naukri.com/{_slug(q)}{'-internship' if k == 'Internships' else ''}-jobs"
+                    f"{'-in-' + _slug(l) if l else ''}"),
+    ("Wellfound", "🚀", "Startup jobs and internships",
+    lambda q, l, k: "https://www.google.com/search?q=" +
+                quote_plus(f"site:wellfound.com/jobs {q} {'internship' if k == 'Internships' else ''} {l}")),
+    ("Internshala", "🎓", "Internships and fresher jobs",
+    lambda q, l, k: f"https://internshala.com/{'internships' if k == 'Internships' else 'jobs'}"
+                    f"/keywords-{_slug(q)}/"),
+    ("Glassdoor", "🏢", "Jobs with salary and company reviews",
+    lambda q, l, k: f"https://www.glassdoor.co.in/Job/jobs.htm?sc.keyword="
+                    f"{quote_plus(q + (' internship' if k == 'Internships' else ''))}"),
+        ("Foundit", "🧭", "Formerly Monster India",
+    lambda q, l, k: "https://www.google.com/search?q=" +
+                    quote_plus(f"site:foundit.in {q} {'internship' if k == 'Internships' else 'jobs'} {l}")),
+    ("Google Jobs", "🌐", "Combines listings from many sites",
+    lambda q, l, k: "https://www.google.com/search?ibp=htl;jobs&q=" +
+                quote_plus(f"{q} {'internship' if k == 'Internships' else 'jobs'} {l}")),
+]
+
+
+def _record(uid: str, portal: str, role: str, kind: str, loc: str, url: str, skills: list) -> None:
+    job = {"id": f"link-{_slug(portal)}-{_slug(role)}-{_slug(kind)}",
+        "title": f"{role} ({kind[:-1] if kind.endswith('s') else kind})",
+        "company": portal, "location": loc or "Any", "url": url,
+        "source": portal, "kind": "search"}
     try:
-        data = api.get_applications(uid)
-        return {i["job"]["id"] for i in data.get("items", [])}, data.get("total", 0)
+        api.mark_applied(uid, job, skills)
+        st.toast(f"Saved: applied via {portal} ✅")
+    except api.ApiError as e:
+        st.toast(f"Could not save: {e}", icon="⚠️")
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _backend_rank(skills: tuple, goal: str, interests: tuple):
+    base = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+    r = requests.post(f"{base}/recommend", timeout=30,
+                    json={"skills": list(skills), "career_goal": goal, "interests": list(interests)})
+    r.raise_for_status()
+    return r.json()["roles"]
+
+
+def _rank(skills, goal, interests):
+    try:
+        return _backend_rank(tuple(skills), goal, tuple(interests)), "scikit-learn"
     except Exception:
-        return set(), 0
-
-
-def _salary(job) -> str:
-    lo, hi = job.get("salary_min"), job.get("salary_max")
-    if lo and hi:
-        return f"Salary: {int(lo):,} – {int(hi):,} per year"
-    if lo or hi:
-        return f"Salary: about {int(lo or hi):,} per year"
-    return ""
-
-
+        return match_roles(skills, goal, interests), "rule-based"
 def render(profile: dict) -> None:
     st.title("💼 Recommendations")
-    msg = st.session_state.pop("apply_flash", None)
-    if msg:
-        st.toast(msg)
-
     skills = profile.get("skills", []) + profile.get("extra_skills", [])
-    uid = profile.get("user_id")
     if not skills:
         st.info("Add your skills in **👤 Profile** (top right) to get recommendations.")
         return
 
-    # ---- Roles that fit your skills ----
-    st.markdown("#### 🎯 Roles that fit your skills")
+    ranked, engine = _rank(skills, profile.get("career_goal", ""), profile.get("interests", []))
+
+    st.subheader("Best-fit roles for you")
+    st.caption(f"Ranked by the {engine} matcher.")
     cols = st.columns(3)
-    ranked = match_roles(skills, profile.get("career_goal", ""), profile.get("interests", []))
     for col, r in zip(cols, ranked[:3]):
         with col:
             with st.container(border=True):
@@ -49,74 +88,46 @@ def render(profile: dict) -> None:
                     st.caption(why)
                 st.markdown(chips(r["matched"], "have"), unsafe_allow_html=True)
 
-    # ---- Job search ----
-    st.markdown("#### 🔎 Jobs you can apply to")
-    with st.form("job_search"):
-        c1, c2, c3 = st.columns([2, 2, 1.4])
-        pick = c1.selectbox("Search for", ["All my skills"] + skills)
-        q = c2.text_input("Extra keyword (optional)", placeholder="e.g. fresher, intern, analyst")
-        loc = c3.text_input("Location", "India")
-        st.form_submit_button("🔎 Find jobs", type="primary")
+    st.divider()
+    st.subheader("🔗 Find jobs and internships")
+    st.caption("Pick what you want, then open any portal. Each one opens a ready-made search "
+            "in a new tab, and you apply on the company's own listing.")
 
-    search_skills = skills[:8] if pick == "All my skills" else [pick]
-    params = (tuple(search_skills), q.strip(), (loc.strip() or "India"))
-    cache = st.session_state.get("jobs_result")
-    if cache is None or cache["params"] != params:
-        with st.spinner("Finding jobs..."):
-            try:
-                data = api.get_jobs(list(params[0]), params[1], params[2])
-            except Exception as exc:
-                st.error(f"Could not load jobs. Is the backend running? ({exc})")
-                return
-        cache = {"params": params, "data": data}
-        st.session_state["jobs_result"] = cache
-    data = cache["data"]
-    jobs = sorted(data["jobs"], key=lambda j: -len(j.get("skills_matched", [])))[:30]
+    role_names = [r["role"] for r in ranked]
+    c1, c2, c3 = st.columns([2, 2, 2])
+    with c1:
+        role = st.selectbox("Role", role_names + ["Other (type below)"])
+    with c2:
+        loc = st.text_input("Location", value="India", placeholder="e.g. Hyderabad, Remote")
+    with c3:
+        kind = st.radio("Looking for", ["Jobs", "Internships"], horizontal=True)
 
-    applied, total = _applied(uid)
-    a, b = st.columns(2)
-    with a:
-        metric_card("Jobs you applied to", str(total))
-    with b:
-        metric_card("Jobs shown", str(len(jobs)))
-    if data.get("note"):
-        st.info(data["note"])
-    if data["source"] == "adzuna":
-        st.caption("Click **Apply ↗** to open the job's apply page in a new tab. After you apply there, "
-                   "come back and press **I applied ✅** so it counts on your Home graph.")
-    else:
-        st.caption("These open job-site searches. Apply on the site, then come back and press "
-                "**I applied ✅** so it counts on your Home graph.")
-    if not uid:
-        st.warning("Save your profile first so your applications can be recorded.")
+    if role.startswith("Other"):
+        role = st.text_input("Type the role", placeholder="e.g. Frontend Developer").strip()
+    add_skills = st.checkbox("Add my top skills to the search", value=False)
 
-    # ---- Job cards ----
-    for job in jobs:
-        jid = job["id"]
-        is_search = job.get("kind") == "search"
-        done = jid in applied and not is_search
-        with st.container(border=True):
-            left, mid, right = st.columns([5, 1.6, 1.8])
-            with left:
-                st.markdown(f"**{job['title']}**")
-                meta = " · ".join(x for x in [job.get("company"), job.get("location"), job.get("posted")] if x)
-                if meta:
-                    st.caption(meta)
-                sal = _salary(job)
-                if sal:
-                    st.caption(sal)
-                if job.get("skills_matched"):
-                    st.markdown(chips(job["skills_matched"], "have"), unsafe_allow_html=True)
-            with mid:
-                label = f"Open {job['source']} ↗" if is_search else "Apply ↗"
-                st.link_button(label, job["url"], use_container_width=True)
-            with right:
-                if done:
-                    st.success("Applied ✅")
-                elif uid and st.button("I applied ✅", key=f"ap_{jid}", use_container_width=True):
-                    try:
-                        api.mark_applied(uid, job, job.get("skills_matched") or search_skills[:1] or ["Other"])
-                        st.session_state["apply_flash"] = "Saved. It now counts on your Home graph ✅"
-                        st.rerun()
-                    except Exception as exc:
-                        st.error(f"Could not save: {exc}")
+    if not role:
+        st.info("Type a role to see the search links.")
+        return
+
+    query = role + (" " + " ".join(skills[:2]) if add_skills else "")
+    uid = profile.get("user_id", "")
+
+    for i in range(0, len(PORTALS), 2):
+        row = st.columns(2)
+        for col, (name, icon, blurb, build) in zip(row, PORTALS[i:i + 2]):
+            url = build(query, loc.strip(), kind)
+            with col:
+                with st.container(border=True):
+                    st.markdown(f"### {icon} {name}")
+                    st.caption(blurb)
+                    b1, b2 = st.columns(2)
+                    with b1:
+                        st.link_button(f"Search {kind.lower()} ↗", url, use_container_width=True)
+                    with b2:
+                        if st.button("I applied ✅", key=f"ap-{name}-{role}-{kind}",
+                                    use_container_width=True):
+                            _record(uid, name, role, kind, loc, url, skills)
+
+    st.caption("Tip: after you apply on a portal, press **I applied ✅** on its card so your "
+            "Home graph stays accurate.")

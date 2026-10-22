@@ -12,6 +12,7 @@ from utils.roadmap import topics_for
 
 from . import config, database, rag
 from .models import ChatRequest, ChatResponse, Profile, ProgressUpdate, ResumeInput
+from .reco_router import router as reco_router
 
 logging.basicConfig(level=logging.INFO)
 LEVELS = ["Beginner", "Intermediate", "Advanced"]
@@ -24,7 +25,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="CareerGuide AI", version="1.0.0", lifespan=lifespan)
-app.include_router(jobs_router)
+app.include_router(reco_router)
 
 # CORS: allowed origins come from CORS_ORIGINS in .env (local + live URLs)
 app.add_middleware(
