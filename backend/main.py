@@ -1,5 +1,6 @@
 """Run:  python -m uvicorn backend.main:app --reload --port 8000"""
 from .jobs_router import router as jobs_router
+from .auth_router import router as auth_router
 import logging
 from contextlib import asynccontextmanager
 
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="CareerGuide AI", version="1.0.0", lifespan=lifespan)
+app.include_router(auth_router)
 app.include_router(reco_router)
 app.include_router(jobs_router)
 

@@ -4,8 +4,10 @@ from typing import List, Optional
 
 from .recommender import ALIASES, ROLES, recommend
 
-NICE = {"llms": "LLMs", "apis": "APIs", "sql": "SQL", "html": "HTML", "css": "CSS",
-        "node.js": "Node.js", "power bi": "Power BI", "javascript": "JavaScript"}
+NICE = {"c programming": "C Programming", "c++": "C++", "iot": "IoT", "cad": "CAD",
+        "matlab": "MATLAB", "verilog": "Verilog","llms": "LLMs", "apis": "APIs",
+        "sql": "SQL", "html": "HTML", "css": "CSS","node.js": "Node.js", "power bi": "Power BI", 
+        "javascript": "JavaScript"}
 
 VOCAB = sorted({s for r in ROLES.values() for s in r["skills"]} | set(ALIASES), key=len, reverse=True)
 

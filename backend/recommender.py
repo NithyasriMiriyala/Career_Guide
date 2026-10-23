@@ -1,47 +1,17 @@
-"""scikit-learn role recommender: TF-IDF + cosine similarity blended with skill coverage."""
-from typing import Dict, List
+"""scikit-learn role recommender: TF-IDF + cosine similarity blended with skill coverage.
+Roles, aliases and interests come from utils/local_matcher.py (one source of truth)."""
+from typing import List
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-ROLES: Dict[str, dict] = {
-    "AI Engineer": {"description": "Build products powered by LLMs and machine learning.",
-                    "skills": ["python", "machine learning", "deep learning", "llms", "apis", "docker"]},
-    "Machine Learning Engineer": {"description": "Train, evaluate and deploy ML models.",
-                    "skills": ["python", "machine learning", "statistics", "sql", "docker", "git"]},
-    "Data Scientist": {"description": "Find insights and build predictive models from data.",
-                    "skills": ["python", "statistics", "machine learning", "sql", "data visualization"]},
-    "Data Analyst": {"description": "Turn data into reports and dashboards.",
-                    "skills": ["sql", "excel", "power bi", "data visualization", "statistics", "python"]},
-    "Frontend Developer": {"description": "Build the interface users see and use.",
-                    "skills": ["html", "css", "javascript", "react", "git"]},
-    "Backend Developer": {"description": "Build servers, APIs and databases.",
-                    "skills": ["python", "node.js", "java", "sql", "apis", "docker", "git"]},
-    "Full Stack Developer": {"description": "Work on both the interface and the server.",
-                    "skills": ["html", "css", "javascript", "react", "node.js", "sql", "apis", "git"]},
-    "DevOps / Cloud Engineer": {"description": "Automate deployment and run apps in the cloud.",
-                    "skills": ["cloud", "docker", "git", "python", "apis"]},
-    "UI/UX Designer": {"description": "Design clear, friendly interfaces.",
-                    "skills": ["html", "css", "communication", "data visualization"]},
-}
+from utils.local_matcher import ALIASES as _BASE_ALIASES
+from utils.local_matcher import INTERESTS, ROLES
 
-INTERESTS = {
-    "Artificial Intelligence": ["AI Engineer", "Machine Learning Engineer", "Data Scientist"],
-    "Data & Analytics": ["Data Analyst", "Data Scientist"],
-    "Web Development": ["Frontend Developer", "Full Stack Developer", "Backend Developer"],
-    "Backend & APIs": ["Backend Developer", "Full Stack Developer"],
-    "Cloud & DevOps": ["DevOps / Cloud Engineer"],
-    "Automation": ["DevOps / Cloud Engineer", "Backend Developer"],
-    "Design & UI": ["UI/UX Designer", "Frontend Developer"],
-    "Research": ["Data Scientist", "Machine Learning Engineer"],
-}
-
-ALIASES = {"js": "javascript", "reactjs": "react", "react.js": "react", "node": "node.js",
-        "nodejs": "node.js", "ml": "machine learning", "dl": "deep learning",
-        "llm": "llms", "api": "apis", "rest api": "apis", "rest apis": "apis",
-        "powerbi": "power bi", "aws": "cloud", "azure": "cloud", "gcp": "cloud",
-        "stats": "statistics", "html5": "html", "css3": "css", "ai": "machine learning", 
-        "artificial intelligence": "machine learning",}
+ALIASES = {**_BASE_ALIASES,
+        "reactjs": "react", "react.js": "react", "dl": "deep learning",
+        "rest api": "apis", "rest apis": "apis", "stats": "statistics",
+        "html5": "html", "css3": "css", "artificial intelligence": "machine learning"}
 
 GOAL_BONUS, INTEREST_BONUS, INTEREST_BONUS_MAX = 12, 4, 8
 
@@ -69,7 +39,6 @@ def recommend(skills: List[str], career_goal: str = "", interests: List[str] = N
     sims = cosine_similarity(matrix[-1], matrix[:-1])[0]
 
     goal = (career_goal or "").lower()
-    boosted = {r for i in interests for r in INTERESTS.get(i, [])}
     out = []
     for name, sim in zip(names, sims):
         need = ROLES[name]["skills"]
@@ -80,7 +49,7 @@ def recommend(skills: List[str], career_goal: str = "", interests: List[str] = N
         reasons = []
         if matched:
             reasons.append(f"You know {len(matched)} of {len(need)} core skills")
-        if goal and (name.lower() in goal or goal in name.lower()):
+        if goal and goal == name.lower():
             score += GOAL_BONUS
             reasons.append("Matches your career goal")
         hits = [i for i in interests if name in INTERESTS.get(i, [])]

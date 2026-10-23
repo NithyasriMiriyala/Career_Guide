@@ -6,7 +6,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from utils import api
-from utils.local_matcher import INTEREST_OPTIONS, ROLES
+from utils.local_matcher import EDUCATION_OPTIONS, EXPERIENCE_LEVELS, ROLES, interests_for
 from utils.theme import inject_css, nav_scroll_behavior
 from views import home, recommendations, resume, roadmap, skill_gap
 
@@ -24,12 +24,36 @@ SKILL_OPTIONS = [
     "Python", "SQL", "Java", "JavaScript", "HTML", "CSS", "React", "Node.js",
     "Machine Learning", "Deep Learning", "LLMs", "APIs", "Docker", "Git",
     "Cloud", "Excel", "Power BI", "Statistics", "Data Visualization", "Communication",
+    "C Programming", "C++", "Embedded Systems", "Microcontrollers", "IoT", "Verilog",
+    "MATLAB", "Signal Processing", "Networking", "CAD",
 ]
 LEVELS = ["Beginner", "Intermediate", "Advanced"]
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 # ---------- Login screen (shown when there is no ?uid= in the address) ----------
+def _submit_auth(email: str, password: str, create: bool) -> None:
+    e = email.strip().lower()
+    if not EMAIL_RE.match(e):
+        st.error("Please enter a valid email address.")
+        return
+    if not password:
+        st.error("Please enter your password.")
+        return
+    if create and len(password) < 8:
+        st.error("Use at least 8 characters for the password.")
+        return
+    with st.spinner("Contacting the server... the first request can take up to a minute."):
+        new_uid, error = (api.register if create else api.login)(e, password)
+    if error:
+        st.error(error)
+        return
+    st.session_state["email"] = e
+    st.session_state["flash"] = "login"
+    st.query_params["uid"] = new_uid
+    st.rerun()
+
+
 def login_screen() -> None:
     # make sure the slim left bar from an earlier visit doesn't affect this page
     components.html(
@@ -39,20 +63,28 @@ def login_screen() -> None:
     )
     st.markdown('<div class="cg-brand">🎯 CareerGuide AI</div>', unsafe_allow_html=True)
     st.title("Welcome 👋")
-    st.caption("Log in with your email to open your saved profile, applications and progress, "
-            "or to create a new profile. There is no password yet, so use your own email.")
-    with st.form("login_form"):
-        email = st.text_input("Email", placeholder="you@example.com")
-        go = st.form_submit_button("Continue", type="primary")
-    if go:
-        e = email.strip().lower()
-        if not EMAIL_RE.match(e):
-            st.error("Please enter a valid email address.")
-        else:
-            st.session_state["email"] = e
-            st.session_state["flash"] = "login"
-            st.query_params["uid"] = hashlib.sha256(e.encode()).hexdigest()[:12]
-            st.rerun()
+    st.caption("Log in to open your saved profile, applications and progress, or create an account.")
+    tab_in, tab_up = st.tabs(["🔑 Log in", "✨ Create account"])
+    with tab_in:
+        with st.form("login_form"):
+            email = st.text_input("Email", placeholder="you@example.com")
+            password = st.text_input("Password", type="password")
+            go = st.form_submit_button("Log in", type="primary")
+        if go:
+            _submit_auth(email, password, create=False)
+    with tab_up:
+        with st.form("signup_form"):
+            s_email = st.text_input("Email", placeholder="you@example.com", key="su_email")
+            s_pw = st.text_input("Choose a password (at least 8 characters)", type="password", key="su_pw")
+            s_pw2 = st.text_input("Confirm password", type="password", key="su_pw2")
+            go2 = st.form_submit_button("Create account", type="primary")
+        if go2:
+            if s_pw != s_pw2:
+                st.error("The two passwords don't match.")
+            else:
+                _submit_auth(s_email, s_pw, create=True)
+        st.caption("Used this site before with just your email? Create an account with the same "
+                "email and your saved data will be kept.")
     st.stop()
 
 
@@ -94,19 +126,42 @@ def profile_dialog():
         "Graduated year", 1990, 2040, int(p.get("grad_year", 2026)),
         step=1, format="%d", key="p_grad",
     )
-    education = st.text_input(
-        "Education", p.get("education", ""), key="p_edu",
-        placeholder="e.g. B.Tech in Computer Science",
+
+    # Education decides which interests are offered below
+    saved_edu = p.get("education", "")
+    edu_options = ["(select your education)"] + EDUCATION_OPTIONS
+    if saved_edu and saved_edu not in edu_options:
+        edu_options.append(saved_edu)  # keep an older free-text value visible
+    education_pick = st.selectbox(
+        "Education", edu_options,
+        index=edu_options.index(saved_edu) if saved_edu in edu_options else 0, key="p_edu_sel",
     )
-    interests = st.multiselect(
-        "Interests", INTEREST_OPTIONS,
-        default=[i for i in p.get("interests", []) if i in INTEREST_OPTIONS], key="p_interests",
-    )
+    education = "" if education_pick.startswith("(select") else education_pick
+
+    options = interests_for(education)
+    if "p_interests" not in st.session_state:
+        st.session_state["p_interests"] = [i for i in p.get("interests", []) if i in options]
+    else:  # drop interests that don't belong to the newly chosen education
+        st.session_state["p_interests"] = [i for i in st.session_state["p_interests"] if i in options]
+    interests = st.multiselect("Interests (these change with your education)", options, key="p_interests")
+
     goal_options = ["(not set)"] + list(ROLES)
     saved_goal = p.get("career_goal", "")
     career_goal = st.selectbox(
         "Career goal (the role you want)", goal_options,
         index=goal_options.index(saved_goal) if saved_goal in goal_options else 0, key="p_goal",
+    )
+
+    saved_level = p.get("experience_level", EXPERIENCE_LEVELS[0])
+    experience_level = st.selectbox(
+        "Experience level", EXPERIENCE_LEVELS,
+        index=EXPERIENCE_LEVELS.index(saved_level) if saved_level in EXPERIENCE_LEVELS else 0,
+        key="p_exp_level",
+    )
+    experience = st.text_area(
+        "Experience, internships or projects (optional, one per line)", p.get("experience", ""),
+        height=100, key="p_exp",
+        placeholder="Built a Python API with SQL during my internship at XYZ",
     )
 
     skills = st.multiselect("Skillset", SKILL_OPTIONS, default=p.get("skills", []), key="p_skills")
@@ -139,9 +194,11 @@ def profile_dialog():
             "name": name.strip(),
             "dob": dob,
             "grad_year": int(grad_year),
-            "education": education.strip(),
+            "education": education,
             "interests": interests,
             "career_goal": "" if career_goal == "(not set)" else career_goal,
+            "experience_level": experience_level,
+            "experience": experience.strip(),
             "skills": skills,
             "extra_skills": extra_list,
             "levels": levels,
@@ -149,8 +206,7 @@ def profile_dialog():
         st.session_state["profile"] = new_profile
         ok = api.save_profile(uid, new_profile, st.session_state.get("targets", {}))
         st.session_state["flash"] = "ok" if ok else "fail"
-        st.rerun() 
-
+        st.rerun()
 
 # ---------- Top bar: brand | menu | profile | log out ----------
 brand_col, nav_col, profile_col, logout_col = st.columns([1.6, 8.2, 1.2, 1.2])

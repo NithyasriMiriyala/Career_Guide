@@ -91,3 +91,25 @@ def set_skill_done(uid: str, skill: str, done: bool) -> dict:
 def get_skill_progress(uid: str) -> dict:
     """{"total", "completed": [skills], "by_month", "items"}"""
     return _strict("GET", f"/skill-progress/{uid}")
+# ---------- Accounts ----------
+def _auth(path: str, email: str, password: str):
+    """Returns (uid, error_message). One of them is empty."""
+    try:
+        r = requests.post(f"{BASE}{path}", json={"email": email, "password": password}, timeout=60)
+    except requests.RequestException:
+        return None, "The server isn't reachable right now. It may be waking up, so try again in a minute."
+    if r.ok:
+        return r.json()["uid"], ""
+    try:
+        detail = r.json().get("detail")
+    except ValueError:
+        detail = None
+    return None, detail if isinstance(detail, str) else "Something went wrong. Please try again."
+
+
+def register(email: str, password: str):
+    return _auth("/auth/register", email, password)
+
+
+def login(email: str, password: str):
+    return _auth("/auth/login", email, password)

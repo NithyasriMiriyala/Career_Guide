@@ -37,7 +37,7 @@ def _adzuna(skills: List[str], q: str, location: str, page: int) -> List[Dict[st
     app_id, app_key = os.getenv("ADZUNA_APP_ID", ""), os.getenv("ADZUNA_APP_KEY", "")
     country = os.getenv("ADZUNA_COUNTRY", "in")
     params = {"app_id": app_id, "app_key": app_key, "results_per_page": 20,
-              "content-type": "application/json"}
+            "content-type": "application/json"}
     if q:
         params["what"] = q
     if skills:
@@ -45,7 +45,7 @@ def _adzuna(skills: List[str], q: str, location: str, page: int) -> List[Dict[st
     if location and location.lower() not in ("india", "any"):
         params["where"] = location
     r = httpx.get(f"https://api.adzuna.com/v1/api/jobs/{country}/search/{page}",
-                  params=params, timeout=12)
+                params=params, timeout=12)
     r.raise_for_status()
     jobs = []
     for j in r.json().get("results", []):
@@ -89,7 +89,7 @@ def _search_links(skills: List[str], q: str, location: str) -> List[Dict[str, An
 
 @router.get("/jobs")
 def jobs(skills: str = Query("", description="comma separated"), q: str = "",
-         location: str = "India", page: int = 1):
+        location: str = "India", page: int = 1):
     sk = [s.strip() for s in skills.split(",") if s.strip()]
     key = f"{sk}|{q}|{location}|{page}"
     hit = _CACHE.get(key)

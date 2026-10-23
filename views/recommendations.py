@@ -5,7 +5,7 @@ import requests
 import streamlit as st
 
 from utils import api
-from utils.local_matcher import match_roles
+from utils.local_matcher import match_roles, skills_in_text
 from utils.theme import chips
 
 
@@ -74,10 +74,15 @@ def render(profile: dict) -> None:
         st.info("Add your skills in **👤 Profile** (top right) to get recommendations.")
         return
 
-    ranked, engine = _rank(skills, profile.get("career_goal", ""), profile.get("interests", []))
+    known = {s.lower() for s in skills}
+    from_experience = [s for s in skills_in_text(profile.get("experience", "")) if s not in known]
+    rank_skills = skills + [s.title() for s in from_experience]
+    ranked, engine = _rank(rank_skills, profile.get("career_goal", ""), profile.get("interests", []))
 
     st.subheader("Best-fit roles for you")
     st.caption(f"Ranked by the {engine} matcher.")
+    if from_experience:
+        st.caption("Also counted from your experience: " + ", ".join(s.title() for s in from_experience))
     cols = st.columns(3)
     for col, r in zip(cols, ranked[:3]):
         with col:
@@ -100,8 +105,8 @@ def render(profile: dict) -> None:
     with c2:
         loc = st.text_input("Location", value="India", placeholder="e.g. Hyderabad, Remote")
     with c3:
-        kind = st.radio("Looking for", ["Jobs", "Internships"], horizontal=True)
-
+            kind = st.radio("Looking for", ["Jobs", "Internships"], horizontal=True,
+                        index=1 if profile.get("experience_level") == "Student / Fresher" else 0)
     if role.startswith("Other"):
         role = st.text_input("Type the role", placeholder="e.g. Frontend Developer").strip()
     add_skills = st.checkbox("Add my top skills to the search", value=False)

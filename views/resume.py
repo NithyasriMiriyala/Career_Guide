@@ -71,7 +71,7 @@ def render(profile: dict) -> None:
         summary = st.text_area("Summary (optional, we write one if empty)", d.get("summary", ""), height=80)
         education = st.text_area("Education", d.get("education", ""), height=100,
                                 placeholder="B.Tech in Computer Science, ABC University, 2026, CGPA 8.4")
-        experience = st.text_area("Experience / internships", d.get("experience", ""), height=130,
+        experience = st.text_area("Experience / internships", d.get("experience", profile.get("experience", "")), height=130,
                                 placeholder="Data Analyst Intern at XYZ: Reduced report time by 30% by automating Excel tasks")
         projects = st.text_area("Projects", d.get("projects", ""), height=130,
                                 placeholder="Built a job recommender in Python using scikit-learn with 85% accuracy")

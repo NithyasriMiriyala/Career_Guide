@@ -13,7 +13,9 @@ class Profile(BaseModel):
     grad_year: Optional[int] = Field(None, ge=1950, le=2050)
     education: str = ""                              # e.g. "B.Tech, Computer Science"
     interests: List[str] = Field(default_factory=list)
-    career_goal: str = ""                            # a target role, e.g. "Data Analyst"
+    career_goal: str = ""   
+    experience_level: str = ""
+    experience: str = ""   
     skills: List[str] = Field(default_factory=list)
     extra_skills: List[str] = Field(default_factory=list)
     levels: Dict[str, Level] = Field(default_factory=dict)    # skill -> current level
