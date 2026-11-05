@@ -224,4 +224,4 @@ With MongoDB Atlas connected, everything is stored in the `careerguide` database
 ---
 
 ## 📄 License
-This project is licensed under the [MIT License](License)
+This project is licensed under the [MIT License](LICENSE)
